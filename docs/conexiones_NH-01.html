@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conexiones NH-01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Hoja de taller: mapa de pines arriba, tablas por componente debajo */
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --ink: #142028;
+  --muted: #5b6b75;
+  --line: #d3dde2;
+  --accent: #0a7f99;
+  --tft: #0a7f99;
+  --touch: #7a4fc2;
+  --dht: #2f8f46;
+  --rgb: #c4402f;
+  --pwr: #8a6a10;
+  --off: #b9c5cb;
+  --font-display: "Chakra Petch", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1419; --surface: #12212a; --ink: #e3eef3; --muted: #93a7b1; --line: #24394450;
+    --accent: #3fd0ec; --tft: #3fd0ec; --touch: #b394f0; --dht: #5fd07a; --rgb: #ff7a66; --pwr: #e3bd4d; --off: #3a4f5a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1419; --surface: #12212a; --ink: #e3eef3; --muted: #93a7b1; --line: #24394450;
+  --accent: #3fd0ec; --tft: #3fd0ec; --touch: #b394f0; --dht: #5fd07a; --rgb: #ff7a66; --pwr: #e3bd4d; --off: #3a4f5a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 4px; }
+.eyebrow { font: 600 13px var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(28px, 5vw, 42px)/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 22px/1.2 var(--font-display); margin: 0 0 10px; text-wrap: balance; }
+.lead { color: var(--muted); max-width: 68ch; margin: 6px 0 0; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px 12px; }
+.svgwrap { overflow-x: auto; }
+svg { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink); }
+figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; border-top: 4px solid var(--c, var(--accent)); }
+.card h2 { color: var(--c, var(--ink)); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font: 600 12px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.pin, code { font: 500 14px var(--font-mono); font-variant-numeric: tabular-nums; }
+td.pin { white-space: nowrap; color: var(--c, var(--accent)); }
+.note { font-size: 14px; color: var(--muted); margin: 10px 0 0; }
+.checks { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.checks ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.warn { border-left: 4px solid var(--pwr); padding: 10px 14px; background: color-mix(in srgb, var(--pwr) 10%, var(--surface)); border-radius: 0 10px 10px 0; font-size: 15px; }
+@media (max-width: 420px) { main { padding: 20px 16px 40px; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">NANOHUMANO LABS · NH-01 · firmware v15</div>
+  <h1>Conexiones para la placa fija</h1>
+  <p class="lead">Pines tal como están en el código v15 y en tu <code>User_Setup.h</code>. El ESP32 está dibujado visto desde arriba, con el USB-C a la izquierda, igual que en tu protoboard.</p>
+</header>
+
+<figure>
+  <div class="svgwrap">
+  <svg viewBox="0 0 1000 640" role="img" aria-label="Mapa de pines del ESP32 DevKit de 30 pines con la función de cada pin usado en el NH-01">
+    <!-- Placa -->
+    <rect x="118" y="238" width="806" height="164" rx="14" fill="none" stroke="currentColor" stroke-width="2"/>
+    <rect x="86" y="292" width="40" height="56" rx="8" fill="none" stroke="currentColor" stroke-width="2"/>
+    <text x="106" y="372" font-size="12" text-anchor="middle" fill="currentColor" opacity=".7">USB-C</text>
+    <rect x="640" y="268" width="150" height="104" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/>
+    <text x="715" y="316" font-size="13" text-anchor="middle" fill="currentColor" opacity=".7">ESP-32D</text>
+    <text x="715" y="334" font-size="12" text-anchor="middle" fill="currentColor" opacity=".55">N4 · 4 MB</text>
+    <text x="196" y="324" font-size="12" text-anchor="middle" fill="currentColor" opacity=".6">EN</text>
+    <circle cx="196" cy="300" r="8" fill="none" stroke="currentColor" opacity=".5"/>
+    <text x="196" y="372" font-size="12" text-anchor="middle" fill="currentColor" opacity=".6">BOOT</text>
+    <circle cx="196" cy="348" r="8" fill="none" stroke="currentColor" opacity=".5"/>
+
+    <!-- FILA SUPERIOR: VIN GND D13 D12 D14 D27 D26 D25 D33 D32 D35 D34 VN VP EN  (x = 160 + i*52) -->
+    <g font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+      <!-- nombres dentro de la placa -->
+      <g fill="currentColor" text-anchor="middle">
+        <text x="160" y="276">VIN</text><text x="212" y="276">GND</text><text x="264" y="276">D13</text><text x="316" y="276">D12</text>
+        <text x="368" y="276">D14</text><text x="420" y="276">D27</text><text x="472" y="276">D26</text><text x="524" y="276">D25</text>
+        <text x="576" y="276">D33</text><text x="628" y="276">D32</text><text x="680" y="276" opacity=".55">D35</text><text x="732" y="276" opacity=".55">D34</text>
+        <text x="784" y="276" opacity=".55">VN</text><text x="836" y="276" opacity=".55">VP</text><text x="888" y="276">EN</text>
+      </g>
+      <!-- pines -->
+      <circle cx="160" cy="252" r="7" fill="var(--pwr)"/><circle cx="212" cy="252" r="7" fill="currentColor"/>
+      <circle cx="264" cy="252" r="7" fill="var(--tft)"/><circle cx="316" cy="252" r="7" fill="var(--off)"/>
+      <circle cx="368" cy="252" r="7" fill="var(--off)"/><circle cx="420" cy="252" r="7" fill="var(--dht)"/>
+      <circle cx="472" cy="252" r="7" fill="var(--rgb)"/><circle cx="524" cy="252" r="7" fill="var(--rgb)"/>
+      <circle cx="576" cy="252" r="7" fill="var(--off)"/><circle cx="628" cy="252" r="7" fill="var(--rgb)"/>
+      <circle cx="680" cy="252" r="7" fill="var(--off)"/><circle cx="732" cy="252" r="7" fill="var(--off)"/>
+      <circle cx="784" cy="252" r="7" fill="var(--off)"/><circle cx="836" cy="252" r="7" fill="var(--off)"/>
+      <circle cx="888" cy="252" r="7" fill="var(--pwr)"/>
+      <!-- guias y etiquetas hacia arriba -->
+      <g stroke-width="1.5">
+        <line x1="160" y1="244" x2="160" y2="214" stroke="var(--pwr)"/>
+        <line x1="212" y1="244" x2="212" y2="214" stroke="currentColor"/>
+        <line x1="264" y1="244" x2="264" y2="214" stroke="var(--tft)"/>
+        <line x1="420" y1="244" x2="420" y2="214" stroke="var(--dht)"/>
+        <line x1="472" y1="244" x2="472" y2="214" stroke="var(--rgb)"/>
+        <line x1="524" y1="244" x2="524" y2="214" stroke="var(--rgb)"/>
+        <line x1="628" y1="244" x2="628" y2="214" stroke="var(--rgb)"/>
+        <line x1="888" y1="244" x2="888" y2="214" stroke="var(--pwr)"/>
+      </g>
+      <g font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13" font-weight="600">
+        <text transform="translate(165 208) rotate(-90)" fill="var(--pwr)">5V del USB</text>
+        <text transform="translate(217 208) rotate(-90)" fill="currentColor">GND común</text>
+        <text transform="translate(269 208) rotate(-90)" fill="var(--tft)">TFT · LED (brillo)</text>
+        <text transform="translate(425 208) rotate(-90)" fill="var(--dht)">DHT11 · DATA</text>
+        <text transform="translate(477 208) rotate(-90)" fill="var(--rgb)">RGB · verde (G)</text>
+        <text transform="translate(529 208) rotate(-90)" fill="var(--rgb)">RGB · rojo (R)</text>
+        <text transform="translate(633 208) rotate(-90)" fill="var(--rgb)">RGB · azul (B)</text>
+        <text transform="translate(737 208) rotate(-90)" fill="currentColor" opacity=".5">libre (LDR futura)</text>
+        <text transform="translate(893 208) rotate(-90)" fill="var(--pwr)">+ condensador 10 µF</text>
+      </g>
+    </g>
+
+    <!-- FILA INFERIOR: 3V3 GND D15 D2 D4 D16 D17 D5 D18 D19 D21 RX0 TX0 D22 D23 -->
+    <g font-family="IBM Plex Mono, Consolas, monospace" font-size="12">
+      <g fill="currentColor" text-anchor="middle">
+        <text x="160" y="374">3V3</text><text x="212" y="374">GND</text><text x="264" y="374" opacity=".55">D15</text><text x="316" y="374" opacity=".55">D2</text>
+        <text x="368" y="374" opacity=".55">D4</text><text x="420" y="374">D16</text><text x="472" y="374">D17</text><text x="524" y="374">D5</text>
+        <text x="576" y="374">D18</text><text x="628" y="374">D19</text><text x="680" y="374">D21</text><text x="732" y="374" opacity=".55">RX0</text>
+        <text x="784" y="374" opacity=".55">TX0</text><text x="836" y="374" opacity=".55">D22</text><text x="888" y="374">D23</text>
+      </g>
+      <circle cx="160" cy="388" r="7" fill="var(--pwr)"/><circle cx="212" cy="388" r="7" fill="currentColor"/>
+      <circle cx="264" cy="388" r="7" fill="var(--off)"/><circle cx="316" cy="388" r="7" fill="var(--off)"/>
+      <circle cx="368" cy="388" r="7" fill="var(--off)"/><circle cx="420" cy="388" r="7" fill="var(--tft)"/>
+      <circle cx="472" cy="388" r="7" fill="var(--tft)"/><circle cx="524" cy="388" r="7" fill="var(--tft)"/>
+      <circle cx="576" cy="388" r="7" fill="var(--tft)"/><circle cx="628" cy="388" r="7" fill="var(--tft)"/>
+      <circle cx="680" cy="388" r="7" fill="var(--touch)"/><circle cx="732" cy="388" r="7" fill="var(--off)"/>
+      <circle cx="784" cy="388" r="7" fill="var(--off)"/><circle cx="836" cy="388" r="7" fill="var(--off)"/>
+      <circle cx="888" cy="388" r="7" fill="var(--tft)"/>
+      <g stroke-width="1.5">
+        <line x1="160" y1="396" x2="160" y2="426" stroke="var(--pwr)"/>
+        <line x1="212" y1="396" x2="212" y2="426" stroke="currentColor"/>
+        <line x1="420" y1="396" x2="420" y2="426" stroke="var(--tft)"/>
+        <line x1="472" y1="396" x2="472" y2="426" stroke="var(--tft)"/>
+        <line x1="524" y1="396" x2="524" y2="426" stroke="var(--tft)"/>
+        <line x1="576" y1="396" x2="576" y2="426" stroke="var(--tft)"/>
+        <line x1="628" y1="396" x2="628" y2="426" stroke="var(--tft)"/>
+        <line x1="680" y1="396" x2="680" y2="426" stroke="var(--touch)"/>
+        <line x1="888" y1="396" x2="888" y2="426" stroke="var(--tft)"/>
+      </g>
+      <g font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="13" font-weight="600" text-anchor="end">
+        <text transform="translate(165 432) rotate(-90)" fill="var(--pwr)">3,3 V · DHT11 (+ TFT*)</text>
+        <text transform="translate(217 432) rotate(-90)" fill="currentColor">GND común</text>
+        <text transform="translate(425 432) rotate(-90)" fill="var(--tft)">TFT · DC/RS</text>
+        <text transform="translate(477 432) rotate(-90)" fill="var(--tft)">TFT · RESET</text>
+        <text transform="translate(529 432) rotate(-90)" fill="var(--tft)">TFT · CS</text>
+        <text transform="translate(581 432) rotate(-90)" fill="var(--tft)">SCK + T_CLK</text>
+        <text transform="translate(633 432) rotate(-90)" fill="var(--tft)">SDO(MISO) + T_DO</text>
+        <text transform="translate(685 432) rotate(-90)" fill="var(--touch)">Táctil · T_CS</text>
+        <text transform="translate(893 432) rotate(-90)" fill="var(--tft)">SDI(MOSI) + T_DIN</text>
+      </g>
+    </g>
+  </svg>
+  </div>
+  <figcaption>Cada pin coloreado lleva un cable; los grises quedan libres. D18, D19 y D23 son un bus compartido: de cada uno salen dos cables, uno a la pantalla y otro al táctil.</figcaption>
+  <div class="legend">
+    <span><i style="background:var(--tft)"></i>Pantalla ST7796S</span>
+    <span><i style="background:var(--touch)"></i>Táctil XPT2046</span>
+    <span><i style="background:var(--dht)"></i>DHT11</span>
+    <span><i style="background:var(--rgb)"></i>LED RGB (MOSFET)</span>
+    <span><i style="background:var(--pwr)"></i>Alimentación y condensador</span>
+    <span><i style="background:var(--off)"></i>Libre</span>
+  </div>
+</figure>
+
+<section class="cards">
+  <div class="card" style="--c: var(--tft)">
+    <h2>Pantalla 4" ST7796S</h2>
+    <table>
+      <thead><tr><th>Pin pantalla</th><th>ESP32</th><th>Nota</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">VCC</td><td class="pin">3V3*</td><td>La misma tensión que usas ahora en la protoboard.</td></tr>
+        <tr><td class="pin">GND</td><td class="pin">GND</td><td></td></tr>
+        <tr><td class="pin">CS</td><td class="pin">D5</td><td></td></tr>
+        <tr><td class="pin">RESET</td><td class="pin">D17</td><td></td></tr>
+        <tr><td class="pin">DC/RS</td><td class="pin">D16</td><td></td></tr>
+        <tr><td class="pin">SDI(MOSI)</td><td class="pin">D23</td><td>Compartido con T_DIN</td></tr>
+        <tr><td class="pin">SCK</td><td class="pin">D18</td><td>Compartido con T_CLK</td></tr>
+        <tr><td class="pin">LED</td><td class="pin">D13</td><td>Brillo por PWM. Nunca a 3V3.</td></tr>
+        <tr><td class="pin">SDO(MISO)</td><td class="pin">D19</td><td>Compartido con T_DO</td></tr>
+      </tbody>
+    </table>
+    <p class="note">* El módulo admite 3,3 V o 5 V según su puente J1. Si en la protoboard funciona, repite exactamente esa conexión. Los pines SD_ de la tarjeta no se usan.</p>
+  </div>
+
+  <div class="card" style="--c: var(--touch)">
+    <h2>Táctil (mismo conector)</h2>
+    <table>
+      <thead><tr><th>Pin pantalla</th><th>ESP32</th><th>Nota</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">T_CLK</td><td class="pin">D18</td><td>Unido a SCK</td></tr>
+        <tr><td class="pin">T_CS</td><td class="pin">D21</td><td>Su propio pin</td></tr>
+        <tr><td class="pin">T_DIN</td><td class="pin">D23</td><td>Unido a SDI(MOSI)</td></tr>
+        <tr><td class="pin">T_DO</td><td class="pin">D19</td><td>Unido a SDO(MISO)</td></tr>
+        <tr><td class="pin">T_IRQ</td><td class="pin">—</td><td>Sin conectar</td></tr>
+      </tbody>
+    </table>
+    <p class="note">En la placa fija puedes hacer un puente corto entre SCK y T_CLK, SDI y T_DIN, SDO y T_DO junto al conector, y llevar un solo cable de cada par al ESP32.</p>
+  </div>
+
+  <div class="card" style="--c: var(--dht)">
+    <h2>Sensor DHT11</h2>
+    <table>
+      <thead><tr><th>Pin sensor</th><th>ESP32</th><th>Nota</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">VCC (+)</td><td class="pin">3V3</td><td></td></tr>
+        <tr><td class="pin">DATA (S)</td><td class="pin">D27</td><td>El módulo azul ya lleva su resistencia.</td></tr>
+        <tr><td class="pin">GND (−)</td><td class="pin">GND</td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Colócalo lejos del ESP32 y de la pantalla, junto a una rejilla de la carcasa. Si no, medirá 1 o 2 °C de más.</p>
+  </div>
+
+  <div class="card" style="--c: var(--rgb)">
+    <h2>LED RGB con 3 MOSFET</h2>
+    <table>
+      <thead><tr><th>Señal</th><th>ESP32</th><th>Va a</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">Rojo</td><td class="pin">D25</td><td>Puerta (G) del MOSFET 1, a través de su resistencia</td></tr>
+        <tr><td class="pin">Verde</td><td class="pin">D26</td><td>Puerta (G) del MOSFET 2</td></tr>
+        <tr><td class="pin">Azul</td><td class="pin">D32</td><td>Puerta (G) del MOSFET 3</td></tr>
+        <tr><td class="pin">Fuente (S)</td><td class="pin">GND</td><td>Las tres al GND común</td></tr>
+        <tr><td class="pin">Drenador (D)</td><td class="pin">—</td><td>Cada uno a su color (R, G, B) del LED</td></tr>
+        <tr><td class="pin">Común (+)</td><td class="pin">—</td><td>A la misma alimentación que en la protoboard</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Copia las dos resistencias de cada MOSFET (la de la puerta y la que va de la puerta a GND) tal cual están en tu protoboard: ya funcionan.</p>
+  </div>
+
+  <div class="card" style="--c: var(--pwr)">
+    <h2>Condensador de arranque</h2>
+    <table>
+      <thead><tr><th>Pata</th><th>ESP32</th><th>Nota</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">+ (larga)</td><td class="pin">EN</td><td>Electrolítico de 10 µF</td></tr>
+        <tr><td class="pin">− (franja)</td><td class="pin">GND</td><td></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Con él, el ESP32 entra solo en modo de carga y ya no hace falta mantener pulsado BOOT al subir por cable.</p>
+  </div>
+
+  <div class="card">
+    <h2>Pines libres</h2>
+    <table>
+      <thead><tr><th>Pin</th><th>Uso futuro</th></tr></thead>
+      <tbody>
+        <tr><td class="pin">D34, D35</td><td>LDR (brillo automático). Solo entrada.</td></tr>
+        <tr><td class="pin">D33, D14, D4, D22</td><td>Zumbador, botones u otros</td></tr>
+        <tr><td class="pin">D12, D15, D2</td><td>Mejor evitarlos: los lee al arrancar</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Si vas a añadir un BME280 por I²C, los pines habituales son D21 y D22, pero D21 ya es T_CS. En ese caso se puede usar D33 (SDA) y D14 (SCL).</p>
+  </div>
+</section>
+
+<section class="checks">
+  <h2>Antes de soldar</h2>
+  <ol>
+    <li>Todos los GND juntos: ESP32, pantalla, DHT11, MOSFET y la alimentación del LED.</li>
+    <li>El cable LED de la pantalla va a <code>D13</code>, no a 3V3.</li>
+    <li>Monta el ESP32 sobre tiras de pines hembra, no soldado directo: si se estropea, se cambia en un minuto.</li>
+    <li>Deja accesibles el USB-C y el botón BOOT desde fuera de la carcasa.</li>
+    <li>Prueba con el polímetro que no haya continuidad entre 3V3 y GND antes de conectar el USB.</li>
+  </ol>
+  <p class="warn" style="margin:14px 0 0">Si cambias algún pin al soldar, hay que cambiarlo también en el código (RGB y DHT al principio del <code>.ino</code>, pantalla en <code>User_Setup.h</code>).</p>
+</section>
+</main>
+</body>
+</html>
