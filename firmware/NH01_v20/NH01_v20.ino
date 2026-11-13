@@ -13,7 +13,7 @@
 #include <ESPmDNS.h>
 
 // =====================================================================
-//  NANOHUMANO LABS NH-01  -  v17
+//  NANOHUMANO LABS NH-01  -  v20
 //  CONFIGURACION: valores por defecto. La ciudad tambien se puede cambiar
 //  desde el portal Wi-Fi o desde la web interna (http://nh-01.local).
 // =====================================================================
@@ -57,12 +57,24 @@ const int PIN_BRILLO_PANTALLA = 13;
 const float BRILLO_DIA = 100.0f;    // % en modo AUTO entre salida y puesta del sol
 const float BRILLO_NOCHE = 25.0f;   // % en modo AUTO de noche
 const float MINUTOS_CREPUSCULO = 30.0f; // Bajada/subida gradual alrededor de puesta y salida
+// v19: CODIGO DE COLORES "un color por dato" (prevision de HOY):
+//   ROJO  = viento maximo: apagado < VIENTO_MIN, maximo a partir de VIENTO_MAX
+//   AZUL  = probabilidad de lluvia (0-100 %). Tormenta, nieve o lluvia fuerte: maximo y parpadeando
+//   VERDE = buen tiempo: despejado 100 %, nubes 60 %, niebla 35 %; apagado si llueve
+const float VIENTO_MIN = 15.0f, VIENTO_MAX = 50.0f;  // km/h
+const int LLUVIA_MAX_VERDE = 30;                     // % a partir del cual se apaga el verde
+// ALERTAS (parpadeo 0,7 s encendido / 0,3 s apagado):
+//   ROJO parpadea con viento >= VIENTO_ALERTA
+//   AZUL parpadea con lluvia fuerte, chubascos fuertes, tormenta o nieve
+const float VIENTO_ALERTA = 50.0f;                   // km/h
 // =====================================================================
 
 // Color RGB segun la prevision del DIA.
 // R=25, G=26, B=32. Mantiene la transicion suave y brillo moderado.
 const uint8_t RGB_R=25, RGB_G=26, RGB_B=32;
 int codigoMeteoRGB=-1;
+int lluviaRGB=-1;        // Probabilidad de lluvia de hoy (copia para el LED)
+bool alertaViento=false, alertaLluvia=false;  // Canales que parpadean
 float vientoPronosticoRGB=NAN; // Maximo previsto hoy, no viento instantaneo
 float rgbActual[3]={0,0,0};
 unsigned long ultimoRGB=0;
@@ -77,31 +89,40 @@ void actualizarRGB() {
   unsigned long ahora=millis();
   if (ahora-ultimoRGB<35) return;
   ultimoRGB=ahora;
-  uint8_t r=0,g=0,b=0; // Sin prevision: apagado
+  float r=0,g=0,b=0; // Sin prevision: apagado
   int c=codigoMeteoRGB;
   if(c>=0) {
-    // VERDE: buen tiempo. AMARILLO: lluvia debil o viento 25-39 km/h.
-    // ROJO: lluvia fuerte o viento >=40 km/h.
-    // AZUL: tormentas o nieve (prioridad sobre viento).
     bool tormenta=(c>=95 && c<=99);
     bool nieve=(c>=71 && c<=77)||(c>=85 && c<=86);
-    bool lluviaFuerte=(c==63 || c==65 || c==66 || c==67 || c==80 || c==81 || c==82); // Chubascos en rojo puro
-    bool lluviaDebil=(c>=51 && c<=57)||(c==61);
-    bool vientoFuerte=!isnan(vientoPronosticoRGB) && vientoPronosticoRGB>=40.0f;
-    bool vientoLigero=!isnan(vientoPronosticoRGB) && vientoPronosticoRGB>=25.0f; // Antes 10: casi siempre amarillo
-    if(tormenta || nieve) {r=0;g=0;b=65;} // Azul puro
-    else if(lluviaFuerte || vientoFuerte) {r=65;g=0;b=0;} // Rojo puro, sin azul
-    else if(lluviaDebil || vientoLigero) {r=65;g=65;b=0;}
-    else {r=0;g=65;b=0;}
+    bool precipitacion=(c>=51 && c<=67)||(c>=80 && c<=82)||tormenta||nieve;
+    // ROJO: viento
+    if(!isnan(vientoPronosticoRGB))
+      r = 65.0f * constrain((vientoPronosticoRGB-VIENTO_MIN)/(VIENTO_MAX-VIENTO_MIN), 0.0f, 1.0f);
+    // AZUL: lluvia (con alerta: al maximo y parpadeando)
+    bool lluviaFuerte=(c==65 || c==67 || c==81 || c==82);
+    alertaLluvia = tormenta || nieve || lluviaFuerte;
+    alertaViento = !isnan(vientoPronosticoRGB) && vientoPronosticoRGB >= VIENTO_ALERTA;
+    if(alertaLluvia) b = 65.0f;
+    else if(lluviaRGB >= 0) b = 65.0f * constrain(lluviaRGB / 100.0f, 0.0f, 1.0f);
+    // VERDE: buen tiempo
+    if(!precipitacion && lluviaRGB < LLUVIA_MAX_VERDE) {
+      if(c<=1) g = 65.0f;
+      else if(c<=3) g = 39.0f;
+      else if(c==45 || c==48) g = 23.0f;
+    }
   }
   const float objetivo[3]={(float)r,(float)g,(float)b};
   for(int i=0;i<3;i++) rgbActual[i]+=(objetivo[i]-rgbActual[i])*0.018f;
   // Canales puros en el color final; solo durante la transicion se mezclan brevemente.
   // El porcentaje regula todos los canales.
   const float factor=(brilloRGB/100.0f)*(255.0f/65.0f);
-  analogWrite(RGB_R,constrain((int)(rgbActual[0]*factor+0.5f),0,255));
+  // Parpadeo de alerta, aplicado despues del fundido
+  const bool encendido = (millis() % 1000UL) < 700UL;
+  const float kR = (alertaViento && !encendido) ? 0.0f : 1.0f;
+  const float kB = (alertaLluvia && !encendido) ? 0.0f : 1.0f;
+  analogWrite(RGB_R,constrain((int)(rgbActual[0]*factor*kR+0.5f),0,255));
   analogWrite(RGB_G,constrain((int)(rgbActual[1]*factor+0.5f),0,255));
-  analogWrite(RGB_B,constrain((int)(rgbActual[2]*factor+0.5f),0,255));
+  analogWrite(RGB_B,constrain((int)(rgbActual[2]*factor*kB+0.5f),0,255));
 }
 
 #define DHTPIN 27
@@ -160,13 +181,20 @@ int minutosDesdeTexto(const String& hhmm) {
   if (hhmm.length() < 5 || hhmm[2] != ':') return -1;
   return hhmm.substring(0, 2).toInt() * 60 + hhmm.substring(3, 5).toInt();
 }
+// v20: hora local sin espera. getLocalTime(&t, 0) podia fallar de forma aleatoria
+// y el modo AUTO saltaba al 100 % un instante (parpadeos de brillo).
+bool horaLocalYa(struct tm* t) {
+  time_t ahora = time(nullptr);
+  localtime_r(&ahora, t);
+  return t->tm_year > (2016 - 1900);
+}
 float calcularObjetivoPantalla() {
   if (modoBrilloPantalla != 0) return modoBrilloPantalla;
   struct tm t;
-  if (!getLocalTime(&t, 0)) return BRILLO_DIA;             // Sin hora todavia
+  if (!horaLocalYa(&t)) return brilloPantallaObjetivo;     // Sin hora: mantener el objetivo actual
   int salida = minutosDesdeTexto(salidaSol);
   int puesta = minutosDesdeTexto(puestaSol);
-  if (salida < 0 || puesta < 0) return BRILLO_DIA;         // Sin datos de sol todavia
+  if (salida < 0 || puesta < 0) return brilloPantallaObjetivo; // Sin datos de sol: mantener
   float ahora = t.tm_hour * 60 + t.tm_min + t.tm_sec / 60.0f;
   const float rango = BRILLO_DIA - BRILLO_NOCHE;
   if (ahora >= salida && ahora < puesta) return BRILLO_DIA; // De dia
@@ -929,7 +957,7 @@ void leerInterior() {
     humedad = medianaDe(histH, nH);
   }
   struct tm hoy;
-  if (getLocalTime(&hoy, 0) && hoy.tm_yday != diaMinMax) {
+  if (horaLocalYa(&hoy) && hoy.tm_yday != diaMinMax) {
     diaMinMax = hoy.tm_yday; interiorMax = NAN; interiorMin = NAN; // Nuevo dia
   }
   if (!isnan(t) && nT >= 3) {
@@ -1116,6 +1144,7 @@ bool procesarRespuesta(const String& respuesta) {
   lluvia = precipitacion.as<int>();
   codigoMeteo = tiempo.as<int>();
   codigoMeteoRGB = codigoMeteo;
+  lluviaRGB = lluvia;
   if (!doc["current"]["wind_speed_10m"].isNull())
     vientoActual = doc["current"]["wind_speed_10m"].as<float>();
   if (!doc["current"]["wind_direction_10m"].isNull())
@@ -1338,7 +1367,7 @@ String paginaWeb() {
   h += F("<div class='top'><img alt='NANOHUMANO LABS' src='data:image/jpeg;base64," LOGO_NH_B64 "'><div>");
   h += "<h1>" + htmlSeguro(ciudad) + "</h1><small>NANOHUMANO LABS &middot; NH-01 &middot; ";
   struct tm t;
-  if (getLocalTime(&t, 0)) { char b[24]; snprintf(b, sizeof(b), "%02d:%02d", t.tm_hour, t.tm_min); h += b; }
+  if (horaLocalYa(&t)) { char b[24]; snprintf(b, sizeof(b), "%02d:%02d", t.tm_hour, t.tm_min); h += b; }
   h += " &middot; <a href='/' style='color:#3fe0ff'>actualizar</a></small></div></div><div class='g'>";
   auto carta = [&](const String& t1, const String& v) { h += "<div class='c'><span>" + t1 + "</span><b>" + v + "</b></div>"; };
   carta("Exterior", dato(tempExterior, 1, " &deg;C"));
