@@ -17,15 +17,15 @@
 - **Temperatura y humedad interior** con un DHT11 (filtro de mediana contra lecturas sueltas), con máxima y mínima del día.
 - **Previsión de 5 días** con iconos, temperaturas, lluvia y viento.
 - **Pantalla DETALLE**: gráfica de las próximas 24 horas (temperatura y lluvia), sensación térmica, índice UV, temperatura del agua del mar, altura de las olas, calidad del aire y aviso de calima.
-- **LED RGB "un color por dato"** según la previsión de hoy, con transición suave. Cada color dice una cosa y se mezclan:
+- **Luz LED de aviso, una sola luz cada vez** según la previsión de hoy:
 
   | Color | Qué indica |
   |---|---|
-  | 🔴 Rojo | **Viento**: empieza a encenderse con 15 km/h y llega al máximo con 50 km/h |
-  | 🔵 Azul | **Probabilidad de lluvia**: cuanta más lluvia, más azul |
-  | 🟢 Verde | **Buen tiempo**: fuerte si está despejado, más suave con nubes o niebla. Se apaga si llueve o la lluvia pasa del 30 % |
+  | 🟢 Verde | **Buen tiempo** |
+  | 🔴 Rojo | **Viento** de 25 km/h o más |
+  | 🔵 Azul | **Lluvia**: probabilidad del 40 % o más, o lloviendo |
 
-  **Alertas que parpadean:** el rojo con viento de 50 km/h o más; el azul con lluvia fuerte, chubascos fuertes, tormenta o nieve.
+  **Parpadeo = aviso:** azul con tormenta, nieve o lluvia fuerte; rojo con viento de 50 km/h o más.
 
 - **Brillo de pantalla** automático (baja al ponerse el sol y sube al amanecer) o fijo al 25, 50, 75 o 100 %.
 - **Página web interna** (`http://nh-01.local`) con el estilo de NANOHUMANO LABS para ver los datos y cambiar brillo y ciudad desde el móvil.
@@ -92,7 +92,7 @@ Si la subida falla con `Wrong boot mode detected`, mantén pulsado **BOOT** mien
 
 ## Primer uso
 
-1. Sube `firmware/NH01_v20/NH01_v20.ino`.
+1. Sube `firmware/NH01_v21/NH01_v21.ino`.
 2. Si no tiene Wi-Fi guardada, la pantalla muestra las instrucciones: conéctate desde el móvil a la red **NH-01** y abre `192.168.4.1`.
 3. Elige tu red, escribe la clave y, si quieres, el nombre de tu ciudad con su latitud y longitud (en Google Maps, clic derecho sobre el sitio).
 4. Toca la pantalla para pasar de una pantalla a otra: **Principal → 5 días → Detalle → Control**.
@@ -107,16 +107,33 @@ Si la subida falla con `Wrong boot mode detected`, mantén pulsado **BOOT** mien
 
 | Ruta | Contenido |
 |---|---|
-| `firmware/NH01_v20/NH01_v20.ino` | Firmware completo |
+| `firmware/NH01_v21/NH01_v21.ino` | Firmware completo |
 | `firmware/User_Setup_NH01.h` | Configuración de TFT_eSPI para la pantalla de 4" |
 | `docs/conexiones_NH-01.html` | Esquema de conexiones con el mapa de pines |
 | `fotos/` | Fotos del montaje |
 
 ## Versiones
 
+- **v21**: luz LED simple, una sola luz cada vez (verde, rojo o azul) y parpadeo para avisos.
 - **v20**: el brillo AUTO de la pantalla ya no sube y baja a ratos (lectura de la hora sin fallos).
 - **v19**: nuevo código de colores del LED, "un color por dato", con alertas que parpadean.
 - **v17**: primera versión publicada.
+
+## Caja 3D (beta)
+
+⚠️ **La caja todavía no está terminada**: es una versión en pruebas.
+
+![Caja terminada](fotos/07_terminado_en_caja.jpg)
+
+| Archivo | Material | Notas |
+|---|---|---|
+| `caja_3d_beta/NH-01_v3_NEGRO_1_caja.stl` | PLA negro | Una sola pieza. Imprimir con la cara de la pantalla sobre la cama, sin soportes |
+| `caja_3d_beta/NH-01_v3_NEGRO_2_puerta.stl` | PLA negro | Puerta trasera deslizante (entra por arriba). Muesca para el USB |
+| `caja_3d_beta/NH-01_v3_TRANSLUCIDO_3_frontal_led.stl` | PLA translúcido | Frontal de la franja LED, de un solo color |
+
+- La pantalla va **pegada con cola caliente** contra el frontal (hueco de 93 x 60 mm, marco de 1 mm sobre el cristal de 95 x 62).
+- La tira LED (50 x 8 mm) va en su bolsillo, debajo de la pantalla, detrás del frontal translúcido.
+- Medidas: 140 x 102 x 88 mm.
 
 ## Licencia
 

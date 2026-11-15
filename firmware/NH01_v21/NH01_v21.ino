@@ -13,7 +13,7 @@
 #include <ESPmDNS.h>
 
 // =====================================================================
-//  NANOHUMANO LABS NH-01  -  v20
+//  NANOHUMANO LABS NH-01  -  v21
 //  CONFIGURACION: valores por defecto. La ciudad tambien se puede cambiar
 //  desde el portal Wi-Fi o desde la web interna (http://nh-01.local).
 // =====================================================================
@@ -57,15 +57,14 @@ const int PIN_BRILLO_PANTALLA = 13;
 const float BRILLO_DIA = 100.0f;    // % en modo AUTO entre salida y puesta del sol
 const float BRILLO_NOCHE = 25.0f;   // % en modo AUTO de noche
 const float MINUTOS_CREPUSCULO = 30.0f; // Bajada/subida gradual alrededor de puesta y salida
-// v19: CODIGO DE COLORES "un color por dato" (prevision de HOY):
-//   ROJO  = viento maximo: apagado < VIENTO_MIN, maximo a partir de VIENTO_MAX
-//   AZUL  = probabilidad de lluvia (0-100 %). Tormenta, nieve o lluvia fuerte: maximo y parpadeando
-//   VERDE = buen tiempo: despejado 100 %, nubes 60 %, niebla 35 %; apagado si llueve
-const float VIENTO_MIN = 15.0f, VIENTO_MAX = 50.0f;  // km/h
-const int LLUVIA_MAX_VERDE = 30;                     // % a partir del cual se apaga el verde
-// ALERTAS (parpadeo 0,7 s encendido / 0,3 s apagado):
-//   ROJO parpadea con viento >= VIENTO_ALERTA
-//   AZUL parpadea con lluvia fuerte, chubascos fuertes, tormenta o nieve
+// v21: CODIGO DE COLORES SIMPLE - UNA SOLA LUZ cada vez (prevision de HOY):
+//   VERDE = buen tiempo (ni lluvia ni viento)
+//   ROJO  = viento maximo previsto >= VIENTO_AVISO
+//   AZUL  = probabilidad de lluvia >= LLUVIA_AVISO, o esta lloviendo
+//   PARPADEO = alerta: azul con tormenta, nieve o lluvia fuerte; rojo con viento >= VIENTO_ALERTA
+//   Prioridad: alerta de lluvia > alerta de viento > lluvia > viento > verde
+const float VIENTO_AVISO = 25.0f;                    // km/h
+const int   LLUVIA_AVISO = 40;                       // %
 const float VIENTO_ALERTA = 50.0f;                   // km/h
 // =====================================================================
 
@@ -90,31 +89,25 @@ void actualizarRGB() {
   if (ahora-ultimoRGB<35) return;
   ultimoRGB=ahora;
   float r=0,g=0,b=0; // Sin prevision: apagado
+  alertaViento=false; alertaLluvia=false;
   int c=codigoMeteoRGB;
   if(c>=0) {
     bool tormenta=(c>=95 && c<=99);
     bool nieve=(c>=71 && c<=77)||(c>=85 && c<=86);
-    bool precipitacion=(c>=51 && c<=67)||(c>=80 && c<=82)||tormenta||nieve;
-    // ROJO: viento
-    if(!isnan(vientoPronosticoRGB))
-      r = 65.0f * constrain((vientoPronosticoRGB-VIENTO_MIN)/(VIENTO_MAX-VIENTO_MIN), 0.0f, 1.0f);
-    // AZUL: lluvia (con alerta: al maximo y parpadeando)
     bool lluviaFuerte=(c==65 || c==67 || c==81 || c==82);
-    alertaLluvia = tormenta || nieve || lluviaFuerte;
-    alertaViento = !isnan(vientoPronosticoRGB) && vientoPronosticoRGB >= VIENTO_ALERTA;
-    if(alertaLluvia) b = 65.0f;
-    else if(lluviaRGB >= 0) b = 65.0f * constrain(lluviaRGB / 100.0f, 0.0f, 1.0f);
-    // VERDE: buen tiempo
-    if(!precipitacion && lluviaRGB < LLUVIA_MAX_VERDE) {
-      if(c<=1) g = 65.0f;
-      else if(c<=3) g = 39.0f;
-      else if(c==45 || c==48) g = 23.0f;
-    }
+    bool precipitacion=(c>=51 && c<=67)||(c>=80 && c<=82)||tormenta||nieve;
+    bool hayViento = !isnan(vientoPronosticoRGB) && vientoPronosticoRGB >= VIENTO_AVISO;
+    bool vientoFuerte = !isnan(vientoPronosticoRGB) && vientoPronosticoRGB >= VIENTO_ALERTA;
+    bool hayLluvia = precipitacion || lluviaRGB >= LLUVIA_AVISO;
+    if(tormenta || nieve || lluviaFuerte) { b = 65.0f; alertaLluvia = true; }  // 1. alerta de lluvia
+    else if(vientoFuerte)                 { r = 65.0f; alertaViento = true; }  // 2. alerta de viento
+    else if(hayLluvia)                    { b = 65.0f; }                       // 3. lluvia
+    else if(hayViento)                    { r = 65.0f; }                       // 4. viento
+    else                                  { g = 65.0f; }                       // 5. buen tiempo
   }
   const float objetivo[3]={(float)r,(float)g,(float)b};
   for(int i=0;i<3;i++) rgbActual[i]+=(objetivo[i]-rgbActual[i])*0.018f;
-  // Canales puros en el color final; solo durante la transicion se mezclan brevemente.
-  // El porcentaje regula todos los canales.
+  // El porcentaje de brillo (25/50/75/100) regula la luz encendida.
   const float factor=(brilloRGB/100.0f)*(255.0f/65.0f);
   // Parpadeo de alerta, aplicado despues del fundido
   const bool encendido = (millis() % 1000UL) < 700UL;
