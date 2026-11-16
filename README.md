@@ -19,13 +19,13 @@
 - **Temperatura y humedad interior** con un DHT11 (filtro de mediana contra lecturas sueltas), con máxima y mínima del día.
 - **Previsión de 5 días** con iconos, temperaturas, lluvia y viento.
 - **Pantalla DETALLE**: gráfica de las próximas 24 horas (temperatura y lluvia), sensación térmica, índice UV, temperatura del agua del mar, altura de las olas, calidad del aire y aviso de calima.
-- **Luz LED de aviso, una sola luz cada vez** según la previsión de hoy:
+- **Luz LED de aviso, una sola luz cada vez** según la previsión de las **próximas 12 horas**:
 
   | Color | Qué indica |
   |---|---|
   | 🟢 Verde | **Buen tiempo** |
-  | 🔴 Rojo | **Viento** de 25 km/h o más |
-  | 🔵 Azul | **Lluvia**: probabilidad del 40 % o más, o lloviendo |
+  | 🔴 Rojo | **Viento** de 25 km/h o más en las próximas 12 h |
+  | 🔵 Azul | **Lluvia**: probabilidad del 40 % o más en las próximas 12 h |
 
   **Parpadeo = aviso:** azul con tormenta, nieve o lluvia fuerte; rojo con viento de 50 km/h o más.
 
@@ -94,7 +94,7 @@ Si la subida falla con `Wrong boot mode detected`, mantén pulsado **BOOT** mien
 
 ## Primer uso
 
-1. Sube `firmware/NH01_v21/NH01_v21.ino`.
+1. Sube `firmware/NH01_v22/NH01_v22.ino`.
 2. Si no tiene Wi-Fi guardada, la pantalla muestra las instrucciones: conéctate desde el móvil a la red **NH-01** y abre `192.168.4.1`.
 3. Elige tu red, escribe la clave y, si quieres, el nombre de tu ciudad con su latitud y longitud (en Google Maps, clic derecho sobre el sitio).
 4. Toca la pantalla para pasar de una pantalla a otra: **Principal → 5 días → Detalle → Control**.
@@ -109,13 +109,14 @@ Si la subida falla con `Wrong boot mode detected`, mantén pulsado **BOOT** mien
 
 | Ruta | Contenido |
 |---|---|
-| `firmware/NH01_v21/NH01_v21.ino` | Firmware completo |
+| `firmware/NH01_v22/NH01_v22.ino` | Firmware completo |
 | `firmware/User_Setup_NH01.h` | Configuración de TFT_eSPI para la pantalla de 4" |
 | `docs/conexiones_NH-01.html` | Esquema de conexiones con el mapa de pines |
 | `fotos/` | Fotos del montaje |
 
 ## Versiones
 
+- **v22**: la luz LED mira las próximas 12 horas (antes, el día entero) y el logo de NANOHUMANO LABS aparece al arrancar.
 - **v21**: luz LED simple, una sola luz cada vez (verde, rojo o azul) y parpadeo para avisos.
 - **v20**: el brillo AUTO de la pantalla ya no sube y baja a ratos (lectura de la hora sin fallos).
 - **v19**: nuevo código de colores del LED, "un color por dato", con alertas que parpadean.
