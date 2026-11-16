@@ -1,5 +1,7 @@
 # NH-01 · Reloj y estación meteorológica con ESP32
 
+▶️ **Vídeo:** https://youtu.be/kDDG5YUrk7A
+
 **NANOHUMANO LABS** · Reloj de escritorio con pantalla táctil de 4", previsión del tiempo, datos del mar y un LED RGB que te dice de un vistazo qué día va a hacer.
 
 ![NH-01 pantalla de detalle](fotos/01_pantalla_detalle.jpg)
